@@ -21,3 +21,156 @@ echo "Cleaning up..."
 docker rmi ${DOCKER_IMAGE}:${TAG} || true
 
 echo "Build and push completed successfully!"
+
+
+
+
+## Part2
+Partie 2: CI/CD (continuous delivery/continuous deployment)
+
+1. Créer un autre job freestyle job2tp4 contenant les mêmes instructions du job1tp4 de la première partie tout en ajoutant un script Shell qui déploie l’image sous un nouveau conteneur sur docker engine.
+2. Faire un changement dans index.html, découvrir les changements sur le job2tp4 et sur l’image déployé.
+- Enregistrer les changements dans le répertoire avec la commande git commit -m “tp4 v3”
+- Pusher le code vers le répertoire GitHub avec la commande git push origin master
+- D’après les changements→Déclenchement automatique du build sur Jenkins
+
+3. Créer un job du type pipeline job2tp4v2 (qui reprend les mêmes tâches du job freestyle job2tp4 mais d’une autre manière), ajouter sans rien changer dans les paramètres du job, un script dans la partie script du pipeline assurant les trois stages (Cloning Git, Building image, Publish Image).
+pipeline {
+environment {
+registry = "kelguemmat/tp4"
+registryCredential = 'dockerhub'
+dockerImage = ''
+}
+agent any
+stages {
+stage('Cloning Git') {
+steps {
+git 'https://github.com/kelguemmat/tp4master21-22'
+}
+}
+stage('Building image') {
+steps{
+script {
+dockerImage = docker.build registry + ":$BUILD_NUMBER"
+}
+}
+}
+stage(Publish Image') {
+steps{
+script {
+docker.withRegistry( '', registryCredential ) {
+dockerImage.push()
+}
+}
+}
+}
+}
+}
+
+4. Créer un job du type pipeline (job3tp4). Ce dernier contiendra quatre Stages (Cloning Git, Building image, Test image, Publish Image). Sur le même projet
+TP4, créer un fichier ‘jenkinsfile’ qui définit le script assurant les quatre stages,par la suite spécifier sur le job le chemin du fichier ‘jenkinsfile’.
+Créer le Jenkins file sur le dépôt local et faire le push de ce dernier sur le dépôt distant :
+pipeline {
+environment {
+registry = "kelguemmat/tp4"
+registryCredential = 'dockerhub'
+dockerImage = ''
+}
+agent any
+stages {
+stage('Cloning Git') {
+steps {
+git 'https://github.com/kelguemmat/tp4master21-22'
+}
+}
+stage('Building image') {
+steps{
+script {
+dockerImage = docker.build registry + ":$BUILD_NUMBER"
+}
+}
+}
+stage('Test image') {
+steps{
+script {
+
+echo "Tests passed"
+}
+}
+}
+stage('Publish Image') {
+steps{
+script {
+docker.withRegistry( '', registryCredential ) {
+dockerImage.push()
+}
+}
+}
+}
+}
+}
+
+5. Afficher stage view après quelques changements dans le projet (par exemplecsur index.html).
+- Enregistrer les changements dans le répertoire avec la commande git commit -m “tp4 v3”
+- Pusher le code vers le répertoire GitHub avec la commande git push origin master
+- D’après les changements→Déclenchement automatique du build sur Jenkins
+
+UH2C/ENSET Travaux pratiques/ Ingénierie des Infrastructures Bigdata et Cloud 2025/2026
+
+Pr. Kamal EL GUEMMAT
+
+14
+6. Modifier le pipeline. Ce dernier contiendra cinq Stages (Cloning Git, Building
+image, Test image, Publish Image, deploy image). Ajouter sur le fichier
+jenkinsfile un stage du déploiement de l’image vers docker engine. Tester le
+changement via le stage view.
+pipeline {
+environment {
+registry = "kelguemmat/tp4"
+registryCredential = 'dockerhub'
+dockerImage = ''
+}
+agent any
+stages {
+stage('Cloning Git') {
+steps {
+git 'https://github.com/kelguemmat/tp4master21-22'
+}
+}
+stage('Building image') {
+steps{
+script {
+dockerImage = docker.build registry + ":$BUILD_NUMBER"
+}
+}
+}
+stage('Test image') {
+steps{
+script {
+echo "Tests passed"
+}
+
+UH2C/ENSET Travaux pratiques/ Ingénierie des Infrastructures Bigdata et Cloud 2025/2026
+
+Pr. Kamal EL GUEMMAT
+
+15
+
+}
+}
+stage('Publish Image') {
+steps{
+script {
+docker.withRegistry( '', registryCredential ) {
+dockerImage.push()
+}
+}
+}
+}
+stage('Deploy image') {
+steps{
+bat "docker run -d $registry:$BUILD_NUMBER"
+}
+}
+}
+}
