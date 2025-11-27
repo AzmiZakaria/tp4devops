@@ -3,6 +3,8 @@ pipeline {
         registry = "zakariaaz/tp4-app"
         registryCredential = '40068e42-aa01-45b4-8b58-b6350bf2f3b1'
         dockerImage = ''
+        containerName = "tp4-container"
+        hostPort = "8081"
     }
     agent any
     
@@ -14,6 +16,7 @@ pipeline {
                     url: 'https://github.com/AzmiZakaria/tp4devops.git'
             }
         }
+        
         stage('Building image') {
             steps {
                 script {
@@ -21,14 +24,16 @@ pipeline {
                 }
             }
         }
+        
         stage('Test image') {
             steps {
                 script {
                     sh "docker run --rm ${registry}:${BUILD_NUMBER} nginx -t"
-                    echo 'Tests passed ✓'
+                    echo '✓ Tests passed!'
                 }
             }
         }
+        
         stage('Publish Image') {
             steps {
                 script {
@@ -36,6 +41,19 @@ pipeline {
                         dockerImage.push()
                         dockerImage.push('latest')
                     }
+                }
+            }
+        }
+        
+        stage('Deploy image') {
+            steps {
+                script {
+                    sh """
+                        docker stop ${containerName} 2>/dev/null || true
+                        docker rm ${containerName} 2>/dev/null || true
+                        docker run -d --name ${containerName} -p ${hostPort}:80 ${registry}:${BUILD_NUMBER}
+                    """
+                    echo "✓ Deployed at http://localhost:${hostPort}"
                 }
             }
         }
